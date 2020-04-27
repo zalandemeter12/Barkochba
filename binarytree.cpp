@@ -1,9 +1,11 @@
 #include "binarytree.h"
+#include "question.h"
+#include "guess.h"
+
 #include <iostream>
+#include <stdexcept>
 
 void BinaryTreeElement::addQuestion() {
-    std::cin.clear();
-    fflush(stdin);
     std::string textQ, textG;
     std::cout << "Adj meg egy kérdést, ami az általad gondolt dologra igaz, de a gép által kitalált dologra hamis." << std::endl;
     std::getline(std::cin, textQ);
@@ -34,15 +36,16 @@ BinaryTreeElement* BinaryTree::deserializeHelper(SplitQueue& queue, BinaryTreeEl
     std::string text = queue.pop();
     if (text == "nullptr") return nullptr;
     SplitQueue secondary(text, '~');
-    BinaryTreeElement* newNode;
-    if (secondary.pop() == "guess")
-        newNode = new Guess(secondary.pop(), _parent);
+    if (secondary.pop() == "guess") {
+        Guess* newNode = new Guess(secondary.pop(), _parent);
+        return newNode;
+    }
     else{
-        newNode = new Question(secondary.pop(), nullptr, nullptr, _parent);
+        Question* newNode = new Question(secondary.pop(), nullptr, nullptr, _parent);
         newNode->setLeftTrue(deserializeHelper(queue, newNode));
         newNode->setRightFalse(deserializeHelper(queue, newNode));
+        return newNode;
     }
-    return newNode;
 }
 
 void BinaryTree::deserialize(const std::string& s){
@@ -94,26 +97,4 @@ void BinaryTree::load() {
     if (data.empty()) root = nullptr;
     else deserialize(data);
     ifs.close();
-}
-
-///GUESS --------------------------------------------------
-
-void Guess::askQuestion() {
-    std::string answer;
-    std::cout << text << ", erre gondoltál?" << std::endl;
-    std::cout << "Igen = 1 / Nem = 0" << std::endl;
-    std::getline(std::cin, answer);
-    if (answer == "1") std::cout << "Köszönöm, hogy játszottál!" << std::endl;
-    else if (answer == "0") addQuestion();
-}
-
-///QUESTION ------------------------------------------------
-
-void Question::askQuestion() {
-    std::string answer;
-    std::cout << text << std::endl;
-    std::cout << "Igaz = 1 / Hamis = 0" << std::endl;
-    std::getline(std::cin, answer);
-    if (answer == "1") leftTrue->askQuestion();
-    else if (answer == "0") rightFalse->askQuestion();
 }
