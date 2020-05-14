@@ -1,9 +1,13 @@
+/// \file binarytree.cpp
+
 #include "binarytree.h"
 #include "question.h"
 #include "guess.h"
 
-#include <iostream>
 #include <stdexcept>
+#include <iostream>
+#include <fstream>
+#include <sstream>
 
 void BinaryTreeElement::addQuestion() {
     std::string textQ, textG;
@@ -32,28 +36,29 @@ std::string BinaryTreeElement::serialize() const{
     }
 }
 
-BinaryTreeElement* BinaryTree::deserializeHelper(SplitQueue& queue, BinaryTreeElement* _parent) {
-    std::string text = queue.pop();
-    if (text == "nullptr") return nullptr;
-    SplitQueue secondary(text, '~');
-    if (secondary.pop() == "guess") {
-        Guess* newNode = new Guess(secondary.pop(), _parent);
+BinaryTreeElement* BinaryTree::deserialize(std::istream& is, BinaryTreeElement* _parent) {
+    std::string data;
+    std::getline(is, data, '|');
+
+    if (data.empty()) return nullptr;
+
+    std::istringstream iss(data);
+    std::getline(iss, data, '~');
+
+    if (data == "guess") {
+        std::getline(iss, data);
+        Guess* newNode = new Guess(data, _parent);
         return newNode;
     }
     else{
-        Question* newNode = new Question(secondary.pop(), nullptr, nullptr, _parent);
-        newNode->setLeftTrue(deserializeHelper(queue, newNode));
-        newNode->setRightFalse(deserializeHelper(queue, newNode));
+        std::getline(iss, data);
+        Question* newNode = new Question(data, nullptr, nullptr, _parent);
+        newNode->setLeftTrue(deserialize(is, newNode));
+        newNode->setRightFalse(deserialize(is, newNode));
         return newNode;
     }
 }
-
-void BinaryTree::deserialize(const std::string& s){
-    freeBinaryTree(root);
-    SplitQueue queue(s, '|');
-    root = deserializeHelper(queue, nullptr);
-}
-
+ 
 void BinaryTree::freeBinaryTree (BinaryTreeElement* _root) {
     if (_root == nullptr) return;
     freeBinaryTree(_root->getLeftTrue());
@@ -80,21 +85,19 @@ void BinaryTree::newGame() {
     else root->askQuestion();
 }
 
-#include <fstream>
-
-void BinaryTree::save() const {
-    std::ofstream ofs("barkochba.dat");
+void BinaryTree::save(const std::string& file) const {
+    std::ofstream ofs(file); 
     if (ofs.fail()) throw std::runtime_error("Hiba a fájl megnyitása közben.");
     ofs << root->serialize();
     ofs.close();
 }
 
-void BinaryTree::load() {
-    std::ifstream ifs("barkochba.dat");
+void BinaryTree::load(const std::string& file) {
+    std::ifstream ifs(file);
     if (ifs.fail()) throw std::runtime_error("Hiba a fájl megnyitása közben.");
-    std::string data;
-    std::getline(ifs, data);
-    if (data.empty()) root = nullptr;
-    else deserialize(data);
+
+    freeBinaryTree(root);
+    root = deserialize(ifs, nullptr);
+    
     ifs.close();
 }

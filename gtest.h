@@ -2,7 +2,7 @@
 #define GTEST_LITE_H
 
 /**
- * \file gtest_lite.h  (v3/2019)
+ * \file gtest.h  (v3/2019)
  *
  * Google gtest keretrendszerhez hasonló rendszer.
  * Sz.I. 2015., 2016., 2017. (_Has_X)
